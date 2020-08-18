@@ -1,6 +1,5 @@
 # 【深度全面】JS模块化规范进化论
 
-
 ## 前言
 
 JavaScript 语言诞生至今，模块规范化之路曲曲折折。社区先后出现了各种解决方案，包括 AMD、CMD、CommonJS 等，而后 ECMA 组织在 JavaScript 语言标准层面，增加了模块功能（因为该功能是在 ES2015 版本引入的，所以在下文中将之称为 ES6 module）。  
@@ -598,4 +597,73 @@ console.log('b o.getNum:', o.getNum());
 2. `a o.num: 0`  
   *模块在加载完成后，模块内部的变量变化不会反应到模块的`module.exports`。*
 3. `b o.num: 2`  
-  *对
+  *对导入模块的直接修改会反应到该模块的`module.exports`。*
+4. `b o.getNum: 1`  
+  *模块在加载完成后即形成一个闭包。*
+
+#### ES6 module
+
+```js
+// o.js
+let num = 0;
+function getNum() {
+  return num;
+}
+function setNum(n) {
+  num = n;
+}
+console.log('o init');
+export = {
+  num,
+  getNum,
+  setNum,
+}
+```
+```js
+// main.js
+import { num, getNum, setNum } from './o.js';
+
+console.log('o.num:', num);
+setNum(1);
+
+console.log('o.num:', num);
+console.log('o.getNum:', getNum());
+```
+
+我们增加一个 index.js 用于在 node 端支持 ES6 module：
+```js
+// index.js
+require("@babel/register")({
+  presets: ["@babel/preset-env"]
+});
+
+module.exports = require('./main.js')
+```
+命令行执行`npm install @babel/core @babel/register @babel/preset-env -D`安装 ES6 相关 npm 包。
+
+命令行执行`node index.js`，打印结果如下：  
+1. `o init`  
+  *模块即使被其他多个模块导入，也只会加载一次。*
+2. `o.num: 0`  
+3. `o.num: 1`  
+  *编译时确定模块依赖的 ES6 module，通过`import`导入的接口只是值的引用，所以`num`才会有两次不同打印结果。*
+4. `o.getNum: 1`  
+
+对于打印结果3，知晓其结果，在项目中注意这一点就好。这块会涉及到“Module Records（模块记录）”、“module instance（模快实例）” “linking（链接）”等诸多概念和原理，大家可查看[ES modules: A cartoon deep-dive](https://hacks.mozilla.org/2018/03/es-modules-a-cartoon-deep-dive/)进行深入的研究，本文不再展开。
+
+ES6 module 是编译时加载（或叫做“静态加载”），利用这一点，可以对代码做很多之前无法完成的优化：
+1. 在开发阶段就可以做导入和导出模块相关的代码检查。
+2. 结合 Webpack、Babel 等工具可以在打包阶段移除上下文中味引用的代码（dead-code），这种技术被称作“tree shaking”，可以极大的减小代码体积、缩短程序运行时间、提升程序性能。
+
+
+## 后记
+
+大家在日常开发中都在使用 CommonJS 和 ES6 module，但很多人只知其然而不知其所以然，甚至很多人对 AMD、CMD、IIFE 等概览还比较陌生，希望通过本篇文章，大家对 JS 模块化之路能够有清晰完整的认识。  
+JS 模块化之路目前趋于稳定，但肯定不会止步于此，让我们一起学习，一起进步，一起见证，也希望能有机会为未来的模块化规范贡献自己的一点力量。  
+本人能力有限，文中可能难免有一些谬误，欢迎大家帮助改进，[文章github地址](https://github.com/ronffy/js-module-tutorial)，我是小贼先生。
+
+
+## 参考
+
+[AMD 官方文档](https://github.com/amdjs/amdjs-api/wiki/AMD)  
+[阮一峰：Module 的加载实现](https://es6.ruanyifeng.com/#docs/module-loader)  
