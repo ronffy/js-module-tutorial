@@ -613,7 +613,7 @@ function setNum(n) {
   num = n;
 }
 console.log('o init');
-export = {
+export {
   num,
   getNum,
   setNum,
@@ -653,7 +653,7 @@ module.exports = require('./main.js')
 
 ES6 module 是编译时加载（或叫做“静态加载”），利用这一点，可以对代码做很多之前无法完成的优化：
 1. 在开发阶段就可以做导入和导出模块相关的代码检查。
-2. 结合 Webpack、Babel 等工具可以在打包阶段移除上下文中味引用的代码（dead-code），这种技术被称作“tree shaking”，可以极大的减小代码体积、缩短程序运行时间、提升程序性能。
+2. 结合 Webpack、Babel 等工具可以在打包阶段移除上下文中未引用的代码（dead-code），这种技术被称作“tree shaking”，可以极大的减小代码体积、缩短程序运行时间、提升程序性能。
 
 
 ## 后记
